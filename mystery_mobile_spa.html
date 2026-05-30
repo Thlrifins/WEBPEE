@@ -1,0 +1,2505 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: file:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; object-src 'none'; base-uri 'none'; form-action 'self';">
+  <title>คืนเล่า | เว็บอ่านเรื่องลี้ลับเด็ดๆ</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d0d0d;
+      --panel: #171717;
+      --panel-2: #202020;
+      --ink: #f3efe7;
+      --muted: #a8a19a;
+      --line: rgba(255, 255, 255, 0.1);
+      --blood: #a31621;
+      --blood-2: #e23a4c;
+      --acid: #34f5a4;
+      --amber: #d6a95f;
+      --shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+      --radius: 8px;
+      font-family: "Leelawadee UI", "Noto Sans Thai", Tahoma, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      background: #050505;
+      color: var(--ink);
+      letter-spacing: 0;
+    }
+
+    body {
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 10px),
+        linear-gradient(180deg, #050505 0%, #0d0d0d 62%, #130305 100%);
+    }
+
+    .loader-box {
+      width: calc(100vw - 44px);
+      max-width: 330px;
+      padding: 28px 22px;
+      border: 1px solid rgba(214, 169, 95, 0.2);
+      border-radius: var(--radius);
+      background: rgba(13, 13, 13, 0.86);
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+
+    .loader-eye {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(52, 245, 164, 0.45);
+      display: grid;
+      place-items: center;
+      color: var(--acid);
+      font-size: 38px;
+      box-shadow: 0 0 28px rgba(52, 245, 164, 0.22);
+    }
+
+    .loader-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .loader-text {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .loader-bar {
+      height: 4px;
+      margin-top: 18px;
+      background: #252525;
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .loader-bar span {
+      display: block;
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--blood-2), var(--acid));
+      animation: loadcrawl 1.05s infinite ease-in-out;
+    }
+
+    #app {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+      margin: 0 auto;
+      background:
+        linear-gradient(180deg, rgba(52, 245, 164, 0.04), transparent 190px),
+        linear-gradient(140deg, #0d0d0d 0%, #111 58%, #160306 100%);
+      border-left: 1px solid rgba(255, 255, 255, 0.06);
+      border-right: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 0 42px rgba(0, 0, 0, 0.6);
+    }
+
+    body.ready #app {
+      display: block;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      padding: 12px 14px 10px;
+      padding: max(12px, env(safe-area-inset-top)) 14px 10px;
+      background: rgba(13, 13, 13, 0.94);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-row,
+    .user-chip,
+    .nav-row,
+    .row,
+    .story-meta,
+    .action-row,
+    .chat-user,
+    .admin-row,
+    .avatar-row {
+      display: flex;
+      align-items: center;
+    }
+
+    .brand-row {
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    .brand-kicker {
+      display: block;
+      color: var(--acid);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .brand-title {
+      display: block;
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 950;
+      line-height: 1.15;
+    }
+
+    .user-chip {
+      max-width: 46%;
+      gap: 8px;
+      color: var(--muted);
+      background: #111;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 8px 6px 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .user-chip img,
+    .avatar-sm {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex: 0 0 auto;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .user-chip span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-row {
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .nav-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-btn,
+    .pill-btn,
+    .danger-btn,
+    .ghost-btn,
+    .primary-btn,
+    .icon-btn {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      min-height: 42px;
+      padding: 10px 12px;
+      background: #151515;
+      color: var(--ink);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .nav-btn {
+      flex: 0 0 auto;
+      min-width: 78px;
+      color: var(--muted);
+    }
+
+    .nav-btn.active {
+      color: #070707;
+      border-color: rgba(52, 245, 164, 0.65);
+      background: linear-gradient(180deg, var(--acid), #91ffd3);
+      box-shadow: 0 0 18px rgba(52, 245, 164, 0.18);
+    }
+
+    .screen {
+      padding: 16px 14px 38px;
+    }
+
+    .section-head {
+      margin: 4px 0 16px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.25;
+    }
+
+    .section-head p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .notice,
+    .locked-panel,
+    .empty-state {
+      border: 1px solid rgba(214, 169, 95, 0.22);
+      background: rgba(214, 169, 95, 0.08);
+      border-radius: var(--radius);
+      padding: 12px;
+      color: #ead8b2;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .story-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .story-card,
+    .profile-panel,
+    .form-panel,
+    .chat-panel,
+    .reader-panel,
+    .admin-panel,
+    .member-row,
+    .chat-message {
+      border: 1px solid var(--line);
+      background: rgba(23, 23, 23, 0.92);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+    }
+
+    .story-card {
+      position: relative;
+      overflow: hidden;
+      padding: 14px;
+    }
+
+    .story-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 3px;
+      background: linear-gradient(90deg, var(--blood-2), var(--amber), var(--acid));
+      opacity: 0.75;
+    }
+
+    .story-card h3,
+    .reader-panel h2,
+    .admin-panel h3,
+    .form-panel h3 {
+      margin: 0;
+      line-height: 1.28;
+    }
+
+    .story-card h3 {
+      font-size: 20px;
+      padding-top: 4px;
+    }
+
+    .story-meta {
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 8px 0 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(52, 245, 164, 0.18);
+      color: var(--acid);
+      background: rgba(52, 245, 164, 0.07);
+      border-radius: 999px;
+      min-height: 24px;
+      padding: 3px 8px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .tag.blood {
+      color: #ffd8dc;
+      border-color: rgba(226, 58, 76, 0.25);
+      background: rgba(226, 58, 76, 0.11);
+    }
+
+    .preview {
+      color: #ddd6cc;
+      line-height: 1.72;
+      margin: 0 0 12px;
+    }
+
+    .action-row {
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .primary-btn {
+      border-color: rgba(226, 58, 76, 0.55);
+      background: linear-gradient(180deg, #c12433, #7e1019);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(163, 22, 33, 0.16);
+    }
+
+    .ghost-btn {
+      color: var(--ink);
+      background: #121212;
+    }
+
+    .danger-btn {
+      border-color: rgba(226, 58, 76, 0.55);
+      background: rgba(163, 22, 33, 0.16);
+      color: #ffdce1;
+    }
+
+    .pill-btn {
+      min-height: 38px;
+      border-radius: 999px;
+      padding: 8px 12px;
+    }
+
+    .icon-btn {
+      min-width: 42px;
+      padding: 8px 10px;
+    }
+
+    .reader-panel {
+      padding: 16px;
+      min-height: 52vh;
+      background:
+        repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.015) 0 1px, transparent 1px 9px),
+        rgba(17, 17, 17, 0.96);
+    }
+
+    .reader-body {
+      display: grid;
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .reader-body p {
+      margin: 0;
+      color: #ebe4d9;
+      font-size: 17px;
+      line-height: 1.88;
+      animation: revealText 0.38s ease-out both;
+    }
+
+    .tap-zone {
+      width: 100%;
+      margin-top: 18px;
+      border: 1px dashed rgba(52, 245, 164, 0.35);
+      background: rgba(52, 245, 164, 0.06);
+      color: var(--acid);
+      border-radius: var(--radius);
+      padding: 18px 12px;
+      font-weight: 950;
+    }
+
+    .finish-note {
+      margin: 18px 0 0;
+      color: var(--amber);
+      line-height: 1.65;
+    }
+
+    .form-panel,
+    .profile-panel,
+    .chat-panel,
+    .admin-panel {
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .field-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field label,
+    .choice-title {
+      color: #d8d0c7;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius);
+      background: #101010;
+      color: var(--ink);
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 132px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: rgba(52, 245, 164, 0.65);
+      box-shadow: 0 0 0 3px rgba(52, 245, 164, 0.12);
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .triple {
+      display: grid;
+      grid-template-columns: 0.85fr 1.25fr 1fr;
+      gap: 8px;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .choice-grid.three {
+      grid-template-columns: 1fr;
+    }
+
+    .choice {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #121212;
+      color: var(--ink);
+      font-weight: 850;
+    }
+
+    .choice input {
+      width: auto;
+      min-height: 0;
+      accent-color: var(--blood-2);
+    }
+
+    .avatar-row {
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .avatar-lg {
+      width: 74px;
+      height: 74px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(52, 245, 164, 0.45);
+      box-shadow: 0 0 20px rgba(52, 245, 164, 0.16);
+      flex: 0 0 auto;
+    }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      width: 100%;
+    }
+
+    .avatar-choice {
+      border: 1px solid var(--line);
+      background: #111;
+      border-radius: var(--radius);
+      padding: 6px;
+      min-height: auto;
+    }
+
+    .avatar-choice.active {
+      border-color: var(--acid);
+      box-shadow: 0 0 0 2px rgba(52, 245, 164, 0.12);
+    }
+
+    .avatar-choice img {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .auth-switch,
+    .admin-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .admin-tabs {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .auth-switch button,
+    .admin-tabs button {
+      border: 1px solid var(--line);
+      background: #121212;
+      color: var(--muted);
+      border-radius: var(--radius);
+      min-height: 42px;
+      font-weight: 900;
+    }
+
+    .auth-switch button.active,
+    .admin-tabs button.active {
+      color: #070707;
+      background: var(--acid);
+      border-color: var(--acid);
+    }
+
+    .profile-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .profile-head h2 {
+      margin: 0 0 4px;
+      line-height: 1.2;
+    }
+
+    .profile-head p,
+    .fine-print {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .profile-facts {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    .fact {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+      color: var(--muted);
+    }
+
+    .fact strong {
+      color: var(--ink);
+      text-align: right;
+    }
+
+    .chat-panel {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .chat-list {
+      display: grid;
+      gap: 0;
+      max-height: 56vh;
+      overflow-y: auto;
+    }
+
+    .chat-message {
+      border-width: 0 0 1px;
+      border-radius: 0;
+      padding: 12px;
+      box-shadow: none;
+      background: rgba(18, 18, 18, 0.95);
+    }
+
+    .chat-user {
+      gap: 9px;
+      margin-bottom: 7px;
+    }
+
+    .chat-user strong {
+      display: block;
+      line-height: 1.1;
+    }
+
+    .chat-user span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .chat-text {
+      margin: 0;
+      color: #efe7dc;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px;
+      border-top: 1px solid var(--line);
+      background: #101010;
+    }
+
+    .chat-form input {
+      min-width: 0;
+    }
+
+    .admin-row,
+    .member-row {
+      gap: 10px;
+      justify-content: space-between;
+      padding: 10px;
+      margin-top: 10px;
+    }
+
+    .admin-row {
+      align-items: flex-start;
+    }
+
+    .admin-row > div,
+    .member-row > div {
+      min-width: 0;
+    }
+
+    .admin-row strong,
+    .member-row strong {
+      display: block;
+      overflow-wrap: anywhere;
+    }
+
+    .admin-row p,
+    .member-row p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .security-grid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .security-card {
+      border: 1px solid var(--line);
+      background: rgba(16, 16, 16, 0.88);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+
+    .security-card h4 {
+      margin: 0 0 6px;
+      color: var(--acid);
+      font-size: 15px;
+    }
+
+    .security-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 13px;
+    }
+
+    .audit-list {
+      display: grid;
+      gap: 8px;
+      max-height: 360px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+
+    .audit-item {
+      border: 1px solid var(--line);
+      background: #101010;
+      border-radius: var(--radius);
+      padding: 9px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .audit-item strong {
+      color: #fff;
+      display: block;
+    }
+
+    .code-box {
+      overflow-wrap: anywhere;
+      color: #dffff1;
+      background: rgba(52, 245, 164, 0.06);
+      border: 1px solid rgba(52, 245, 164, 0.18);
+      border-radius: var(--radius);
+      padding: 8px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+    }
+
+    .modal-root {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: grid;
+      place-items: end center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(8px);
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 448px;
+      border: 1px solid rgba(226, 58, 76, 0.42);
+      background: #111;
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-card h3 {
+      margin: 0 0 8px;
+      color: #fff;
+    }
+
+    .modal-card p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      z-index: 3000;
+      transform: translateX(-50%);
+      width: calc(100% - 28px);
+      max-width: 448px;
+      border: 1px solid rgba(52, 245, 164, 0.35);
+      background: rgba(12, 20, 17, 0.96);
+      color: #dffff1;
+      border-radius: var(--radius);
+      padding: 11px 12px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      font-weight: 850;
+    }
+
+    @keyframes loadcrawl {
+      0% {
+        transform: translateX(-120%);
+      }
+
+      100% {
+        transform: translateX(240%);
+      }
+    }
+
+    @keyframes revealText {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+        filter: blur(2px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes glitch {
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      16% {
+        transform: translateX(1px);
+      }
+
+      18% {
+        transform: translateX(-2px);
+      }
+
+      20% {
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes sweep {
+      0% {
+        transform: translateX(-120%);
+      }
+
+      56%,
+      100% {
+        transform: translateX(120%);
+      }
+    }
+
+    @media (min-width: 769px) {
+      body {
+        background:
+          radial-gradient(circle at 12% 10%, rgba(52, 245, 164, 0.12), transparent 28%),
+          radial-gradient(circle at 88% 0%, rgba(226, 58, 76, 0.16), transparent 30%),
+          linear-gradient(140deg, #050505 0%, #101010 52%, #130306 100%);
+      }
+
+      #app {
+        max-width: 1120px;
+        min-height: 100vh;
+      }
+
+      .topbar {
+        padding: 18px 28px 14px;
+      }
+
+      .brand-row {
+        margin-bottom: 14px;
+      }
+
+      .brand-title {
+        font-size: 34px;
+      }
+
+      .brand-kicker {
+        font-size: 12px;
+      }
+
+      .user-chip {
+        max-width: 320px;
+      }
+
+      .nav-row {
+        overflow: visible;
+      }
+
+      .nav-btn {
+        min-width: 110px;
+      }
+
+      .screen {
+        padding: 28px;
+      }
+
+      .section-head {
+        max-width: 760px;
+      }
+
+      .section-head h2 {
+        font-size: 30px;
+      }
+
+      .story-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+      }
+
+      .story-card {
+        min-height: 252px;
+      }
+
+      .reader-panel,
+      .profile-panel,
+      .form-panel {
+        max-width: 780px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .reader-panel {
+        padding: 22px;
+      }
+
+      .chat-panel {
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .chat-list {
+        max-height: 62vh;
+      }
+
+      .admin-tabs,
+      .admin-panel {
+        max-width: 920px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .admin-tabs {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .choice-grid.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .modal-root {
+        place-items: center;
+      }
+
+      .modal-card {
+        max-width: 520px;
+      }
+    }
+
+    @media (min-width: 1100px) {
+      .story-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 360px) {
+      .brand-title {
+        font-size: 23px;
+      }
+
+      .user-chip {
+        max-width: 42%;
+      }
+
+      .triple {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-tabs {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .chat-form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="loader-box">
+      <div class="loader-eye">◉</div>
+      <p class="loader-title">กำลังปลุกคลังเรื่องเล่า...</p>
+      <p class="loader-text">อย่าแตะหน้าจอถ้าเสียงเคาะดังมาจากข้างหลัง</p>
+      <div class="loader-bar"><span></span></div>
+    </div>
+  </div>
+
+  <main id="app" aria-live="polite"></main>
+  <div id="modalRoot" class="modal-root hidden"></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const STORE_KEY = "khunlao_spa_db_v1";
+      const SESSION_KEY = "khunlao_spa_session_v1";
+      const APP_VERSION = "2.0.0";
+      const DB_SCHEMA_VERSION = 2;
+      const SESSION_TTL_MS = 6 * 60 * 60 * 1000;
+      const LOCKOUT_LIMIT = 5;
+      const LOCKOUT_MS = 5 * 60 * 1000;
+      const app = document.getElementById("app");
+      const loadingScreen = document.getElementById("loadingScreen");
+      const modalRoot = document.getElementById("modalRoot");
+      const toast = document.getElementById("toast");
+
+      const thaiMonths = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      ];
+
+      function makeAvatar(label, bg, accent, mark) {
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+                <stop stop-color="${bg}" offset="0"/>
+                <stop stop-color="#050505" offset="1"/>
+              </linearGradient>
+            </defs>
+            <rect width="120" height="120" rx="26" fill="url(#g)"/>
+            <circle cx="60" cy="58" r="34" fill="#111" stroke="${accent}" stroke-width="3"/>
+            <circle cx="48" cy="54" r="5" fill="${accent}"/>
+            <circle cx="72" cy="54" r="5" fill="${accent}"/>
+            <path d="M43 75 Q60 88 77 75" stroke="${accent}" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <text x="60" y="34" font-size="22" text-anchor="middle" fill="${accent}" font-family="Arial">${mark}</text>
+          </svg>`;
+        return {
+          label,
+          src: "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg)
+        };
+      }
+
+      const avatarPresets = [
+        makeAvatar("หน้ากากแดง", "#3b0509", "#e23a4c", "X"),
+        makeAvatar("ตาเขียว", "#06251b", "#34f5a4", "O"),
+        makeAvatar("ผู้เฝ้าประตู", "#261b08", "#d6a95f", "+"),
+        makeAvatar("เงานิ่ง", "#101016", "#b7b3ff", "?")
+      ];
+
+      let db = null;
+      let view = "home";
+      let authMode = "login";
+      let readerStoryId = "";
+      let revealedCount = 1;
+      let adminTab = "stories";
+      let editingStoryId = "";
+      let pickedAvatar = avatarPresets[0].src;
+      let uploadedAvatar = "";
+      let loadingDone = false;
+
+      function randomToken(size) {
+        const bytes = new Uint8Array(size || 16);
+        if (window.crypto && crypto.getRandomValues) {
+          crypto.getRandomValues(bytes);
+        } else {
+          for (let i = 0; i < bytes.length; i += 1) {
+            bytes[i] = Math.floor(Math.random() * 256);
+          }
+        }
+        let token = "";
+        for (let i = 0; i < bytes.length; i += 1) {
+          const hex = bytes[i].toString(16);
+          token += hex.length === 1 ? `0${hex}` : hex;
+        }
+        return token;
+      }
+
+      function leftPad(value, length) {
+        let text = String(value);
+        while (text.length < length) text = `0${text}`;
+        return text;
+      }
+
+      // Compatibility hash for this offline demo. A real public site should use server-side auth.
+      function hashPasswordCompat(password, salt) {
+        const input = `${salt}|${password}|khunlao-security-v2`;
+        const imul = Math.imul || function(a, b) {
+          const ah = (a >>> 16) & 0xffff;
+          const al = a & 0xffff;
+          const bh = (b >>> 16) & 0xffff;
+          const bl = b & 0xffff;
+          return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)) | 0;
+        };
+        let h1 = 0xdeadbeef;
+        let h2 = 0x41c6ce57;
+        for (let round = 0; round < 96; round += 1) {
+          for (let i = 0; i < input.length; i += 1) {
+            const code = input.charCodeAt(i) + round;
+            h1 = imul(h1 ^ code, 2654435761);
+            h2 = imul(h2 ^ code, 1597334677);
+          }
+          h1 = (h1 ^ (h1 >>> 16)) >>> 0;
+          h2 = (h2 ^ (h2 >>> 13)) >>> 0;
+        }
+        return `v2$${leftPad(h1.toString(16), 8)}${leftPad(h2.toString(16), 8)}`;
+      }
+
+      function setPasswordFields(user, password) {
+        user.passwordSalt = randomToken(16);
+        user.passwordHash = hashPasswordCompat(password, user.passwordSalt);
+        delete user.password;
+        user.passwordChangedAt = new Date().toISOString();
+        return user;
+      }
+
+      function verifyPassword(user, password) {
+        if (!user) return false;
+        if (user.passwordHash && user.passwordSalt) {
+          return user.passwordHash === hashPasswordCompat(password, user.passwordSalt);
+        }
+        if (user.password && user.password === password) {
+          setPasswordFields(user, password);
+          return true;
+        }
+        return false;
+      }
+
+      function passwordStrengthMessage(password) {
+        if (String(password || "").length < 8) return "Password ต้องมีอย่างน้อย 8 ตัวอักษร";
+        if (!/[0-9]/.test(password)) return "Password ควรมีตัวเลขอย่างน้อย 1 ตัว";
+        if (!/[A-Za-zก-๙]/.test(password)) return "Password ควรมีตัวอักษรอย่างน้อย 1 ตัว";
+        return "";
+      }
+
+      function cleanText(value, maxLength) {
+        return String(value || "")
+          .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+          .trim()
+          .slice(0, maxLength || 1000);
+      }
+
+      function cleanMultiline(value, maxLength) {
+        return String(value || "")
+          .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+          .trim()
+          .slice(0, maxLength || 12000);
+      }
+
+      // LocalStorage is used as the whole simulated database so the file can run without a server.
+      function createSeedDB() {
+        return {
+          meta: {
+            schemaVersion: DB_SCHEMA_VERSION,
+            appVersion: APP_VERSION,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          security: {
+            loginAttempts: {},
+            audit: []
+          },
+          users: [
+            setPasswordFields({
+              id: "u_admin",
+              username: "admin",
+              role: "admin",
+              firstName: "ผู้ดูแล",
+              lastName: "ระบบ",
+              displayName: "ผู้คุมเงา",
+              birthThai: "1 มกราคม 2530",
+              gender: "ชาย♂",
+              preferredGender: "ทั้งชายและหญิง⚲",
+              email: "admin@khunlao.local",
+              avatar: avatarPresets[2].src,
+              createdAt: new Date().toISOString()
+            }, "admin1234")
+          ],
+          stories: [
+            {
+              id: "s_midnight_food",
+              title: "ออเดอร์สุดท้ายตอน 03:07",
+              author: "แม่ครัวหลังม่าน",
+              body: `แอปส่งอาหารเด้งขึ้นมาตอนตีสามเจ็ดนาที ทั้งที่ร้านแถวนั้นปิดไปหมดแล้ว เมนูมีเพียงอย่างเดียวคือ "ข้าวกล่องสำหรับคนที่ยังหิวอยู่" และที่อยู่ปลายทางอยู่ในซอยที่แผนที่ขึ้นว่าไม่มีทางเข้า\n\nไรเดอร์กดรับงานเพราะยอดค่าจ้างสูงผิดปกติ ระหว่างขับเข้าไป ไฟหน้ารถส่องเห็นป้ายบ้านเลขที่เดิมซ้ำๆ เหมือนถนนทั้งเส้นกำลังวนกลับมาที่จุดเดิม แต่แอปยังนับถอยหลังว่าเหลืออีกหนึ่งนาที\n\nเมื่อถึงหน้าบ้าน ลูกค้าไม่ออกมารับ มีเพียงเสียงแจ้งเตือนดังจากในกล่องอาหารว่า "วางไว้หน้าประตู แล้วห้ามมองช่องหน้าต่าง" เขาทำตามทุกอย่าง ยกเว้นตอนหันกลับไปเห็นเงาคนยืนกินข้าวอยู่ในกระจก ทั้งที่บ้านนั้นถูกไฟไหม้ไปเมื่อสิบปีก่อน\n\nเช้าวันต่อมา ร้านอาหารโทรมาถามว่าใครใช้บัญชีเขาส่งออเดอร์ เพราะร้านไม่เคยเปิดตอนกลางคืน แต่ในประวัติแอปมีรูปยืนยันการส่งอาหารชัดเจน รูปนั้นไม่ได้ถ่ายหน้าบ้านลูกค้า มันถ่ายจากในบ้านออกมา และเห็นไรเดอร์ยืนอยู่หน้าประตูพอดี`,
+              likes: [],
+              createdAt: new Date().toISOString()
+            },
+            {
+              id: "s_face_scan",
+              title: "ระบบจำใบหน้าที่ไม่ควรจำได้",
+              author: "ช่างกล้องชั้นใต้ดิน",
+              body: `อาคารสำนักงานเปลี่ยนระบบเข้าออกใหม่เป็นกล้องตรวจจับใบหน้า พนักงานทุกคนบ่นว่ามันไวเกินไป แค่เดินผ่านประตูก็ปลดล็อกให้เอง ยกเว้นเวรดึกที่ระบบชอบแจ้งว่า "พบใบหน้าที่สอง"\n\nคืนหนึ่ง รปภ. เปิดกล้องย้อนหลังดู เขาเห็นพนักงานบัญชีเดินผ่านประตูตามปกติ แต่ซอฟต์แวร์วาดกรอบสีเขียวไว้บนอากาศด้านหลังเธอ ระบุชื่อว่า "ผู้ใช้งานเดิม" พร้อมคะแนนความมั่นใจ 99.8%\n\nเขาคิดว่าเป็นบั๊ก จึงลบข้อมูลใบหน้าผู้ใช้งานเดิมทั้งหมด แต่ตั้งแต่นั้นเป็นต้นมา ประตูชั้นใต้ดินก็เปิดเองทุกคืนเวลา 02:14 และระบบส่งอีเมลรายงานเข้ากล่องผู้ดูแลด้วยประโยคเดียวกันเสมอว่า "เจ้าของใบหน้ากลับมาแล้ว"\n\nวันสุดท้ายก่อนย้ายระบบ เขาเจอแฟ้มพนักงานเก่าในห้องเก็บของ รูปติดบัตรของผู้ใช้งานเดิมคือหน้าของเขาเอง เพียงแต่วันที่เสียชีวิตในแฟ้มระบุไว้เมื่อสามปีก่อน`,
+              likes: [],
+              createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ],
+          chats: []
+        };
+      }
+
+      function loadDB() {
+        let data = null;
+        try {
+          data = JSON.parse(localStorage.getItem(STORE_KEY));
+        } catch (error) {
+          data = null;
+        }
+
+        if (!data || typeof data !== "object") {
+          data = createSeedDB();
+        }
+
+        data.users = Array.isArray(data.users) ? data.users : [];
+        data.stories = Array.isArray(data.stories) ? data.stories : [];
+        data.chats = Array.isArray(data.chats) ? data.chats : [];
+        data.meta = data.meta && typeof data.meta === "object" ? data.meta : {};
+        data.security = data.security && typeof data.security === "object" ? data.security : {};
+        data.security.loginAttempts = data.security.loginAttempts && typeof data.security.loginAttempts === "object" ? data.security.loginAttempts : {};
+        data.security.audit = Array.isArray(data.security.audit) ? data.security.audit : [];
+        data.meta.schemaVersion = DB_SCHEMA_VERSION;
+        data.meta.appVersion = APP_VERSION;
+        data.meta.updatedAt = new Date().toISOString();
+
+        if (!data.users.some((user) => user.username === "admin")) {
+          data.users.unshift(createSeedDB().users[0]);
+        }
+
+        if (data.stories.length === 0) {
+          data.stories = createSeedDB().stories;
+        }
+
+        data.users.forEach((user) => {
+          user.role = user.role === "admin" ? "admin" : "member";
+          user.privacy = user.privacy && typeof user.privacy === "object" ? user.privacy : {
+            showEmail: false,
+            showRealName: false,
+            showBirthDate: false
+          };
+          if (user.password && !user.passwordHash) {
+            setPasswordFields(user, user.password);
+          }
+          if (!user.passwordHash || !user.passwordSalt) {
+            setPasswordFields(user, user.username === "admin" ? "admin1234" : randomToken(10));
+          }
+        });
+
+        data.stories.forEach((story) => {
+          story.likes = Array.isArray(story.likes) ? story.likes : [];
+          story.createdAt = story.createdAt || new Date().toISOString();
+        });
+
+        data.security.audit = data.security.audit.slice(0, 120);
+        localStorage.setItem(STORE_KEY, JSON.stringify(data));
+        return data;
+      }
+
+      function loadImportedDB(imported) {
+        localStorage.setItem(STORE_KEY, JSON.stringify(imported));
+        return loadDB();
+      }
+
+      function saveDB() {
+        db.meta = db.meta || {};
+        db.meta.schemaVersion = DB_SCHEMA_VERSION;
+        db.meta.appVersion = APP_VERSION;
+        db.meta.updatedAt = new Date().toISOString();
+        localStorage.setItem(STORE_KEY, JSON.stringify(db));
+      }
+
+      function audit(action, actorId, detail) {
+        db.security = db.security || {};
+        db.security.audit = Array.isArray(db.security.audit) ? db.security.audit : [];
+        db.security.audit.unshift({
+          id: uid("a"),
+          action,
+          actorId: actorId || "guest",
+          detail: cleanText(detail || "", 240),
+          createdAt: new Date().toISOString()
+        });
+        db.security.audit = db.security.audit.slice(0, 120);
+      }
+
+      function uid(prefix) {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function escapeHTML(value) {
+        return String(value == null ? "" : value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function getSession() {
+        const raw = localStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        try {
+          const session = JSON.parse(raw);
+          if (session && typeof session === "object") return session;
+        } catch (error) {
+          const legacySession = {
+            userId: raw,
+            token: randomToken(18),
+            issuedAt: Date.now(),
+            expiresAt: Date.now() + SESSION_TTL_MS,
+            browserHash: hashPasswordCompat(navigator.userAgent || "unknown", "ua")
+          };
+          localStorage.setItem(SESSION_KEY, JSON.stringify(legacySession));
+          return legacySession;
+        }
+        return null;
+      }
+
+      function setSession(user) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          userId: user.id,
+          token: randomToken(18),
+          issuedAt: Date.now(),
+          expiresAt: Date.now() + SESSION_TTL_MS,
+          browserHash: hashPasswordCompat(navigator.userAgent || "unknown", "ua")
+        }));
+      }
+
+      function clearSession() {
+        localStorage.removeItem(SESSION_KEY);
+      }
+
+      function currentUser() {
+        const session = getSession();
+        if (!session || !session.userId) return null;
+        if (session.expiresAt && Date.now() > session.expiresAt) {
+          clearSession();
+          return null;
+        }
+        if (session.browserHash && session.browserHash !== hashPasswordCompat(navigator.userAgent || "unknown", "ua")) {
+          clearSession();
+          return null;
+        }
+        return db.users.find((user) => user.id === session.userId) || null;
+      }
+
+      function sessionExpiresText() {
+        const session = getSession();
+        if (!session || !session.expiresAt) return "ยังไม่ได้ล็อกอิน";
+        const diff = Math.max(0, session.expiresAt - Date.now());
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        return `${hours} ชม. ${minutes} นาที`;
+      }
+
+      function getLoginAttempt(username) {
+        const key = String(username || "").trim().toLowerCase();
+        db.security.loginAttempts = db.security.loginAttempts || {};
+        return db.security.loginAttempts[key] || { count: 0, lockedUntil: 0 };
+      }
+
+      function registerLoginFailure(username) {
+        const key = String(username || "").trim().toLowerCase();
+        const current = getLoginAttempt(key);
+        current.count = (current.count || 0) + 1;
+        current.lastFailedAt = new Date().toISOString();
+        if (current.count >= LOCKOUT_LIMIT) {
+          current.lockedUntil = Date.now() + LOCKOUT_MS;
+        }
+        db.security.loginAttempts[key] = current;
+      }
+
+      function clearLoginFailure(username) {
+        const key = String(username || "").trim().toLowerCase();
+        if (db.security.loginAttempts) delete db.security.loginAttempts[key];
+      }
+
+      function maskEmail(email) {
+        const value = String(email || "");
+        const parts = value.split("@");
+        if (parts.length !== 2) return "ซ่อนอยู่";
+        const name = parts[0];
+        return `${name.slice(0, 2)}***@${parts[1]}`;
+      }
+
+      function isAdmin() {
+        const user = currentUser();
+        return Boolean(user && user.role === "admin");
+      }
+
+      function paragraphsOf(story) {
+        if (Array.isArray(story.content)) {
+          return story.content.filter(Boolean);
+        }
+        return String(story.body || "")
+          .split(/\n{2,}/)
+          .map((part) => part.trim())
+          .filter(Boolean);
+      }
+
+      function storyLikeCount(story) {
+        return Array.isArray(story.likes) ? story.likes.length : 0;
+      }
+
+      function hasLiked(story, user) {
+        return Boolean(user && Array.isArray(story.likes) && story.likes.includes(user.id));
+      }
+
+      function displayDate(iso) {
+        try {
+          return new Intl.DateTimeFormat("th-TH", {
+            day: "numeric",
+            month: "short",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+          }).format(new Date(iso));
+        } catch (error) {
+          return "";
+        }
+      }
+
+      function findUserById(id) {
+        return db.users.find((user) => user.id === id) || {
+          displayName: "บัญชีที่ถูกลบ",
+          avatar: avatarPresets[3].src,
+          role: "member"
+        };
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.remove("hidden");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.add("hidden"), 2400);
+      }
+
+      function showGate(actionText) {
+        modalRoot.innerHTML = `
+          <div class="modal-card" role="dialog" aria-modal="true">
+            <h3>ต้องเข้าสู่ระบบก่อน</h3>
+            <p>${escapeHTML(actionText)} ใช้งานได้เฉพาะสมาชิกเท่านั้น สมัครฟรีแล้วกลับมาแตะต่อได้ทันที</p>
+            <div class="action-row">
+              <button class="primary-btn" data-modal-auth="register">สมัครสมาชิก</button>
+              <button class="ghost-btn" data-modal-auth="login">ล็อกอิน</button>
+              <button class="ghost-btn" data-modal-close>ปิด</button>
+            </div>
+          </div>
+        `;
+        modalRoot.classList.remove("hidden");
+      }
+
+      function closeModal() {
+        modalRoot.classList.add("hidden");
+        modalRoot.innerHTML = "";
+      }
+
+      function render() {
+        if (!loadingDone) {
+          return;
+        }
+
+        const user = currentUser();
+        app.innerHTML = `
+          ${renderHeader(user)}
+          <section class="screen">
+            ${renderView(user)}
+          </section>
+        `;
+      }
+
+      function renderHeader(user) {
+        const roleText = user ? (user.role === "admin" ? "Admin" : "Member") : "Guest";
+        const avatar = user ? user.avatar : avatarPresets[3].src;
+        const name = user ? user.displayName : "ผู้มาเยือน";
+        return `
+          <header class="topbar">
+            <div class="brand-row">
+              <div class="brand">
+                <span class="brand-kicker">Horror Stories · PC & Mobile</span>
+                <span class="brand-title">คืนเล่า</span>
+              </div>
+              <button class="user-chip" data-nav="account" aria-label="เปิดบัญชีผู้ใช้">
+                <img src="${escapeHTML(avatar)}" alt="">
+                <span>${escapeHTML(name)} · ${roleText}</span>
+              </button>
+            </div>
+            <nav class="nav-row" aria-label="เมนูหลัก">
+              <button class="nav-btn ${view === "home" || view === "reader" ? "active" : ""}" data-nav="home">เรื่องเล่า</button>
+              <button class="nav-btn ${view === "chat" ? "active" : ""}" data-nav="chat">แชต</button>
+              <button class="nav-btn ${view === "account" ? "active" : ""}" data-nav="account">${user ? "โปรไฟล์" : "ล็อกอิน"}</button>
+              ${user && user.role === "admin" ? `<button class="nav-btn ${view === "admin" ? "active" : ""}" data-nav="admin">หลังบ้าน</button>` : ""}
+            </nav>
+          </header>
+        `;
+      }
+
+      function renderView(user) {
+        if (view === "reader") {
+          return renderReader(user);
+        }
+        if (view === "chat") {
+          return renderChat(user);
+        }
+        if (view === "account") {
+          return renderAccount(user);
+        }
+        if (view === "admin") {
+          return renderAdmin(user);
+        }
+        return renderHome(user);
+      }
+
+      function renderHome(user) {
+        const stories = [...db.stories].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        return `
+          <div class="section-head">
+            <h2>เรื่องลี้ลับเด็ดๆ อ่านได้ทั้ง PC และมือถือ</h2>
+            <p>แตะเปิดเรื่องทีละย่อหน้า เก็บจังหวะหายใจไว้ให้ดี เพราะบางย่อหน้าไม่ควรถูกอ่านเร็วเกินไป</p>
+          </div>
+          ${!user ? `
+            <div class="notice">
+              ตอนนี้คุณเข้าชมแบบ Guest อ่านตัวอย่างได้บางส่วน แต่การอ่านเต็ม แชต และกดถูกใจต้องสมัครสมาชิกก่อน
+            </div>
+          ` : ""}
+          <div class="story-list">
+            ${stories.map((story) => renderStoryCard(story, user)).join("")}
+          </div>
+        `;
+      }
+
+      function renderStoryCard(story, user) {
+        const paras = paragraphsOf(story);
+        const preview = paras[0] || "ยังไม่มีเนื้อหา";
+        return `
+          <article class="story-card">
+            <h3>${escapeHTML(story.title)}</h3>
+            <div class="story-meta">
+              <span>โดย ${escapeHTML(story.author || "นิรนาม")}</span>
+              <span class="tag blood">${storyLikeCount(story)} หัวใจ</span>
+              <span class="tag">${paras.length} ย่อหน้า</span>
+            </div>
+            <p class="preview">${escapeHTML(preview.slice(0, 185))}${preview.length > 185 ? "..." : ""}</p>
+            <div class="action-row">
+              <button class="primary-btn" data-open-story="${escapeHTML(story.id)}">${user ? "แตะอ่าน" : "ดูตัวอย่าง"}</button>
+              <button class="ghost-btn" data-like-story="${escapeHTML(story.id)}">${hasLiked(story, user) ? "เลิกถูกใจ" : "ถูกใจ"} · ${storyLikeCount(story)}</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderReader(user) {
+        const story = db.stories.find((item) => item.id === readerStoryId) || db.stories[0];
+        if (!story) {
+          view = "home";
+          return renderHome(user);
+        }
+
+        const paras = paragraphsOf(story);
+        const visible = user ? paras.slice(0, Math.min(revealedCount, paras.length)) : paras.slice(0, 1);
+        return `
+          <button class="ghost-btn" data-nav="home">กลับหน้ารวมเรื่อง</button>
+          <article class="reader-panel" style="margin-top: 12px;">
+            <div class="story-meta">
+              <span class="tag blood">${user ? "Tap to Reveal" : "Guest Preview"}</span>
+              <span>โดย ${escapeHTML(story.author || "นิรนาม")}</span>
+              <span>${storyLikeCount(story)} หัวใจ</span>
+            </div>
+            <h2>${escapeHTML(story.title)}</h2>
+            <div class="reader-body">
+              ${visible.map((paragraph) => `<p>${escapeHTML(paragraph)}</p>`).join("")}
+            </div>
+            ${user ? renderReaderControls(story, paras.length, user) : renderGuestReaderLock(story)}
+          </article>
+        `;
+      }
+
+      function renderReaderControls(story, total, user) {
+        const done = revealedCount >= total;
+        return `
+          ${done ? `<p class="finish-note">อ่านครบแล้ว แต่ถ้ารู้สึกเหมือนมีใครอ่านพร้อมคุณ ให้ค่อยๆ เลื่อนกลับขึ้นไปดูชื่อเรื่องอีกครั้ง</p>` : `
+            <button class="tap-zone" data-reveal-next>แตะเพื่อเปิดย่อหน้าถัดไป (${Math.min(revealedCount, total)}/${total})</button>
+          `}
+          <div class="action-row" style="margin-top: 14px;">
+            <button class="ghost-btn" data-like-story="${escapeHTML(story.id)}">${hasLiked(story, user) ? "เลิกถูกใจ" : "กดหัวใจ"} · ${storyLikeCount(story)}</button>
+          </div>
+        `;
+      }
+
+      function renderGuestReaderLock(story) {
+        return `
+          <div class="locked-panel" style="margin-top: 16px;">
+            คุณอ่านตัวอย่างได้เท่านี้ การอ่านเรื่องเต็มแบบแตะทีละย่อหน้าต้องสมัครสมาชิกหรือล็อกอินก่อน
+          </div>
+          <div class="action-row">
+            <button class="primary-btn" data-modal-auth="register">สมัครสมาชิก</button>
+            <button class="ghost-btn" data-modal-auth="login">ล็อกอิน</button>
+            <button class="ghost-btn" data-like-story="${escapeHTML(story.id)}">ถูกใจ · ${storyLikeCount(story)}</button>
+          </div>
+        `;
+      }
+
+      function renderAccount(user) {
+        if (user) {
+          return `
+            <div class="profile-panel">
+              <div class="profile-head">
+                <img class="avatar-lg" src="${escapeHTML(user.avatar)}" alt="">
+                <div>
+                  <h2>${escapeHTML(user.displayName)}</h2>
+                  <p>${user.role === "admin" ? "ผู้ดูแลระบบหลัก" : "สมาชิกเว็บคืนเล่า"}</p>
+                </div>
+              </div>
+              <div class="profile-facts">
+                <div class="fact"><span>Username</span><strong>${escapeHTML(user.username)}</strong></div>
+                <div class="fact"><span>ชื่อจริง</span><strong>${escapeHTML(user.firstName)} ${escapeHTML(user.lastName)}</strong></div>
+                <div class="fact"><span>วันเกิด</span><strong>${escapeHTML(user.birthThai)}</strong></div>
+                <div class="fact"><span>เพศ</span><strong>${escapeHTML(user.gender)}</strong></div>
+                <div class="fact"><span>เพศที่ชอบ</span><strong>${escapeHTML(user.preferredGender)}</strong></div>
+                <div class="fact"><span>Email</span><strong>${escapeHTML(user.email)}</strong></div>
+                <div class="fact"><span>Session หมดอายุใน</span><strong>${escapeHTML(sessionExpiresText())}</strong></div>
+                <div class="fact"><span>ล็อกอินล่าสุด</span><strong>${escapeHTML(user.lastLoginAt ? displayDate(user.lastLoginAt) : "ยังไม่มีข้อมูล")}</strong></div>
+              </div>
+              <div class="security-grid">
+                <div class="security-card">
+                  <h4>Privacy Shield</h4>
+                  <p>ข้อมูลจริง เช่น อีเมล ชื่อจริง และวันเกิด จะแสดงเฉพาะเจ้าของบัญชีและแอดมินเท่านั้น คนอื่นในแชตเห็นเพียงรูปโปรไฟล์กับชื่อที่แสดง</p>
+                </div>
+                <div class="security-card">
+                  <h4>Password Protection</h4>
+                  <p>ระบบเก็บรหัสผ่านเป็น salted hash ใน LocalStorage และมี session timeout เพื่อลดความเสี่ยงเมื่อใช้งานเครื่องร่วมกับผู้อื่น</p>
+                </div>
+              </div>
+              <form class="form-panel" id="passwordForm" style="margin-top: 12px;">
+                <h3>เปลี่ยนรหัสผ่าน</h3>
+                <div class="field-grid">
+                  <div class="field">
+                    <label for="currentPassword">รหัสผ่านเดิม</label>
+                    <input id="currentPassword" name="currentPassword" type="password" required autocomplete="current-password">
+                  </div>
+                  <div class="field">
+                    <label for="newPassword">รหัสผ่านใหม่</label>
+                    <input id="newPassword" name="newPassword" type="password" required minlength="8" autocomplete="new-password">
+                  </div>
+                  <button class="primary-btn" type="submit">อัปเดตรหัสผ่าน</button>
+                </div>
+              </form>
+              <div class="action-row">
+                ${user.role === "admin" ? `<button class="primary-btn" data-nav="admin">เปิดหลังบ้าน</button>` : ""}
+                <button class="danger-btn" data-logout>ออกจากระบบ</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="auth-switch">
+            <button class="${authMode === "login" ? "active" : ""}" data-auth-mode="login">ล็อกอิน</button>
+            <button class="${authMode === "register" ? "active" : ""}" data-auth-mode="register">สมัคร</button>
+          </div>
+          ${authMode === "register" ? renderRegisterForm() : renderLoginForm()}
+        `;
+      }
+
+      function renderLoginForm() {
+        return `
+          <form class="form-panel" id="loginForm" autocomplete="on">
+            <h3>เข้าสู่ระบบ</h3>
+            <p class="fine-print" style="margin-top: 6px;">บัญชีแอดมินพร้อมใช้: admin / admin1234</p>
+            <div class="field-grid">
+              <div class="field">
+                <label for="loginUsername">Username</label>
+                <input id="loginUsername" name="username" required autocomplete="username">
+              </div>
+              <div class="field">
+                <label for="loginPassword">Password</label>
+                <input id="loginPassword" name="password" type="password" required autocomplete="current-password">
+              </div>
+              <button class="primary-btn" type="submit">เข้าเว็บ</button>
+            </div>
+          </form>
+        `;
+      }
+
+      function optionRange(start, end, selected) {
+        const parts = [];
+        for (let i = start; i <= end; i += 1) {
+          parts.push(`<option value="${i}" ${i === selected ? "selected" : ""}>${i}</option>`);
+        }
+        return parts.join("");
+      }
+
+      function renderRegisterForm() {
+        const thisYearBE = new Date().getFullYear() + 543;
+        const years = [];
+        for (let year = thisYearBE - 12; year >= thisYearBE - 100; year -= 1) {
+          years.push(`<option value="${year}">${year}</option>`);
+        }
+
+        return `
+          <form class="form-panel" id="registerForm" autocomplete="on">
+            <h3>สมัครสมาชิก</h3>
+            <div class="field-grid">
+              <div class="split">
+                <div class="field">
+                  <label for="regUsername">Username</label>
+                  <input id="regUsername" name="username" required autocomplete="username">
+                </div>
+                <div class="field">
+                  <label for="regPassword">Password</label>
+                  <input id="regPassword" name="password" type="password" required minlength="8" autocomplete="new-password">
+                </div>
+              </div>
+              <div class="split">
+                <div class="field">
+                  <label for="regFirst">ชื่อจริง</label>
+                  <input id="regFirst" name="firstName" required>
+                </div>
+                <div class="field">
+                  <label for="regLast">นามสกุล</label>
+                  <input id="regLast" name="lastName" required>
+                </div>
+              </div>
+              <div class="field">
+                <label for="regDisplay">ชื่อที่แสดงบนเว็บ</label>
+                <input id="regDisplay" name="displayName" required maxlength="32">
+              </div>
+              <div class="field">
+                <span class="choice-title">วัน/เดือน/ปีเกิด (ปฏิทินไทย พ.ศ.)</span>
+                <div class="triple">
+                  <select name="birthDay" aria-label="วันเกิด">${optionRange(1, 31, 1)}</select>
+                  <select name="birthMonth" aria-label="เดือนเกิด">
+                    ${thaiMonths.map((month, index) => `<option value="${index + 1}">${month}</option>`).join("")}
+                  </select>
+                  <select name="birthYear" aria-label="ปีเกิด">${years.join("")}</select>
+                </div>
+              </div>
+              <div class="field">
+                <span class="choice-title">เพศ</span>
+                <div class="choice-grid">
+                  <label class="choice"><input type="radio" name="gender" value="ชาย♂" required> ชาย♂</label>
+                  <label class="choice"><input type="radio" name="gender" value="หญิง♀" required> หญิง♀</label>
+                </div>
+              </div>
+              <div class="field">
+                <span class="choice-title">เพศที่ชอบ</span>
+                <div class="choice-grid three">
+                  <label class="choice"><input type="radio" name="preferredGender" value="ชาย♂" required> ชาย♂</label>
+                  <label class="choice"><input type="radio" name="preferredGender" value="หญิง♀" required> หญิง♀</label>
+                  <label class="choice"><input type="radio" name="preferredGender" value="ทั้งชายและหญิง⚲" required> ทั้งชายและหญิง⚲</label>
+                </div>
+              </div>
+              <div class="field">
+                <label for="regEmail">อีเมล</label>
+                <input id="regEmail" name="email" type="email" required autocomplete="email">
+              </div>
+              <div class="field">
+                <span class="choice-title">รูปโปรไฟล์</span>
+                <div class="avatar-row">
+                  <img id="avatarPreview" class="avatar-lg" src="${escapeHTML(pickedAvatar)}" alt="ตัวอย่างรูปโปรไฟล์">
+                  <div style="flex: 1 1 180px;">
+                    <input id="avatarUpload" type="file" accept="image/*">
+                    <p class="fine-print" style="margin-top: 6px;">อัปโหลดรูปจะถูกแปลงเป็น Base64 และเก็บไว้ใน LocalStorage</p>
+                  </div>
+                </div>
+                <div class="avatar-grid" aria-label="Avatar สำเร็จรูป">
+                  ${avatarPresets.map((avatar, index) => `
+                    <button type="button" class="avatar-choice ${pickedAvatar === avatar.src ? "active" : ""}" data-avatar-index="${index}" aria-label="${escapeHTML(avatar.label)}">
+                      <img src="${escapeHTML(avatar.src)}" alt="">
+                    </button>
+                  `).join("")}
+                </div>
+              </div>
+              <button class="primary-btn" type="submit">สมัครและเข้าอ่าน</button>
+            </div>
+          </form>
+        `;
+      }
+
+      function renderChat(user) {
+        if (!user) {
+          return `
+            <div class="locked-panel">
+              ห้องแชตส่วนกลางเปิดให้สมาชิกที่ล็อกอินแล้วเท่านั้น
+            </div>
+            <div class="action-row">
+              <button class="primary-btn" data-modal-auth="register">สมัครสมาชิก</button>
+              <button class="ghost-btn" data-modal-auth="login">ล็อกอิน</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="section-head">
+            <h2>Global Chat</h2>
+            <p>ห้องคุยกลางสำหรับสมาชิก ข้อความจะถูกบันทึกไว้ใน LocalStorage ของเครื่องนี้</p>
+          </div>
+          <div class="chat-panel">
+            <div class="chat-list" id="chatList">
+              ${db.chats.length === 0 ? `<div class="empty-state" style="margin: 12px;">ยังไม่มีข้อความ ลองพิมพ์อะไรสั้นๆ ให้ห้องนี้ตื่น</div>` : db.chats.map((chat) => renderChatMessage(chat, user)).join("")}
+            </div>
+            <form class="chat-form" id="chatForm">
+              <input name="message" maxlength="500" placeholder="พิมพ์ข้อความ..." required autocomplete="off">
+              <button class="primary-btn" type="submit">ส่ง</button>
+            </form>
+          </div>
+        `;
+      }
+
+      function renderChatMessage(chat, activeUser) {
+        const user = findUserById(chat.userId);
+        const canDelete = activeUser && activeUser.role === "admin";
+        return `
+          <article class="chat-message">
+            <div class="chat-user">
+              <img class="avatar-sm" src="${escapeHTML(user.avatar)}" alt="">
+              <div style="min-width: 0; flex: 1;">
+                <strong>${escapeHTML(user.displayName)}</strong>
+                <span>${displayDate(chat.createdAt)}</span>
+              </div>
+              ${canDelete ? `<button class="danger-btn" data-delete-chat="${escapeHTML(chat.id)}" aria-label="ลบข้อความ">ลบ</button>` : ""}
+            </div>
+            <p class="chat-text">${escapeHTML(chat.message)}</p>
+          </article>
+        `;
+      }
+
+      function renderAdmin(user) {
+        if (!user || user.role !== "admin") {
+          return `<div class="locked-panel">เมนูหลังบ้านเปิดให้ผู้ดูแลระบบเท่านั้น</div>`;
+        }
+
+        return `
+          <div class="section-head">
+            <h2>Admin Dashboard</h2>
+            <p>จัดการเรื่อง สมาชิก และข้อความแชตทั้งหมดจากฐานข้อมูล LocalStorage</p>
+          </div>
+          <div class="admin-tabs">
+            <button class="${adminTab === "stories" ? "active" : ""}" data-admin-tab="stories">เรื่อง</button>
+            <button class="${adminTab === "users" ? "active" : ""}" data-admin-tab="users">สมาชิก</button>
+            <button class="${adminTab === "chats" ? "active" : ""}" data-admin-tab="chats">แชต</button>
+            <button class="${adminTab === "security" ? "active" : ""}" data-admin-tab="security">ความปลอดภัย</button>
+          </div>
+          ${adminTab === "users" ? renderAdminUsers() : adminTab === "chats" ? renderAdminChats(user) : adminTab === "security" ? renderAdminSecurity(user) : renderAdminStories()}
+        `;
+      }
+
+      function renderAdminStories() {
+        const editing = db.stories.find((story) => story.id === editingStoryId);
+        return `
+          <form class="form-panel" id="storyForm">
+            <h3>${editing ? "แก้ไขเรื่อง" : "เพิ่มเรื่องใหม่"}</h3>
+            <input type="hidden" name="storyId" value="${editing ? escapeHTML(editing.id) : ""}">
+            <div class="field-grid">
+              <div class="field">
+                <label for="storyTitle">ชื่อเรื่อง</label>
+                <input id="storyTitle" name="title" required value="${editing ? escapeHTML(editing.title) : ""}">
+              </div>
+              <div class="field">
+                <label for="storyAuthor">นามปากกา</label>
+                <input id="storyAuthor" name="author" required value="${editing ? escapeHTML(editing.author) : ""}">
+              </div>
+              <div class="field">
+                <label for="storyBody">เนื้อหา (คั่นย่อหน้าด้วยบรรทัดว่าง)</label>
+                <textarea id="storyBody" name="body" required>${editing ? escapeHTML(editing.body) : ""}</textarea>
+              </div>
+              <div class="action-row">
+                <button class="primary-btn" type="submit">${editing ? "บันทึกการแก้ไข" : "เพิ่มเรื่อง"}</button>
+                ${editing ? `<button class="ghost-btn" type="button" data-cancel-edit>ยกเลิก</button>` : ""}
+              </div>
+            </div>
+          </form>
+          <div class="admin-panel">
+            <h3>เรื่องทั้งหมด</h3>
+            ${db.stories.map((story) => `
+              <div class="admin-row">
+                <div>
+                  <strong>${escapeHTML(story.title)}</strong>
+                  <p>โดย ${escapeHTML(story.author)} · ${storyLikeCount(story)} หัวใจ</p>
+                </div>
+                <div class="action-row" style="justify-content: flex-end;">
+                  <button class="ghost-btn" data-edit-story="${escapeHTML(story.id)}">แก้ไข</button>
+                  <button class="danger-btn" data-delete-story="${escapeHTML(story.id)}">ลบ</button>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderAdminUsers() {
+        return `
+          <div class="admin-panel">
+            <h3>สมาชิกทั้งหมด (${db.users.length})</h3>
+            ${db.users.map((user) => `
+              <div class="member-row">
+                <div class="chat-user" style="margin: 0;">
+                  <img class="avatar-sm" src="${escapeHTML(user.avatar)}" alt="">
+                  <div>
+                    <strong>${escapeHTML(user.displayName)} ${user.role === "admin" ? `<span class="tag blood">Admin</span>` : ""}</strong>
+                    <p>${escapeHTML(user.username)} · ${escapeHTML(user.email)}</p>
+                  </div>
+                </div>
+                ${user.role === "admin" ? `<button class="ghost-btn" disabled>บัญชีหลัก</button>` : `<button class="danger-btn" data-delete-user="${escapeHTML(user.id)}">ลบบัญชีสมาชิก</button>`}
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderAdminChats(user) {
+        return `
+          <div class="admin-panel">
+            <h3>จัดการข้อความแชต (${db.chats.length})</h3>
+            ${db.chats.length === 0 ? `<div class="empty-state">ยังไม่มีข้อความให้จัดการ</div>` : db.chats.map((chat) => renderChatMessage(chat, user)).join("")}
+          </div>
+        `;
+      }
+
+      function renderAdminSecurity(user) {
+        const attempts = db.security.loginAttempts || {};
+        const lockoutCount = Object.keys(attempts).filter((key) => attempts[key].lockedUntil && attempts[key].lockedUntil > Date.now()).length;
+        const auditRows = (db.security.audit || []).slice(0, 40);
+        return `
+          <div class="admin-panel">
+            <h3>Security Center</h3>
+            <div class="notice" style="margin-top: 10px;">
+              ไฟล์นี้เป็นเว็บเดี่ยวที่ใช้ LocalStorage จึงป้องกันได้ระดับฝั่งเบราว์เซอร์เท่านั้น หากเปิดใช้จริงกับผู้ใช้จำนวนมากควรย้ายระบบล็อกอินและข้อมูลส่วนตัวไปไว้ฝั่งเซิร์ฟเวอร์
+            </div>
+            <div class="security-grid">
+              <div class="security-card">
+                <h4>Schema & Update Ready</h4>
+                <p>App v${escapeHTML(APP_VERSION)} · DB schema v${DB_SCHEMA_VERSION} · ข้อมูลมี meta สำหรับ migration เมื่อพัฒนาต่อ</p>
+              </div>
+              <div class="security-card">
+                <h4>Password Hash</h4>
+                <p>บัญชีทั้งหมดถูก migrate จากรหัสผ่านตัวตรงเป็น salted hash อัตโนมัติเมื่อโหลดเว็บ</p>
+              </div>
+              <div class="security-card">
+                <h4>Login Lockout</h4>
+                <p>ล็อกอินผิด ${LOCKOUT_LIMIT} ครั้งจะพักบัญชี ${Math.round(LOCKOUT_MS / 60000)} นาที · ตอนนี้ถูกล็อก ${lockoutCount} รายการ</p>
+              </div>
+              <div class="security-card">
+                <h4>Session Timeout</h4>
+                <p>Session หมดอายุอัตโนมัติใน ${Math.round(SESSION_TTL_MS / 3600000)} ชั่วโมง เพื่อลดความเสี่ยงจากเครื่องที่ถูกใช้ร่วมกัน</p>
+              </div>
+            </div>
+            <div class="action-row" style="margin-top: 12px;">
+              <button class="primary-btn" data-export-db>Export Backup</button>
+              <label class="ghost-btn" for="dbImport" style="display: inline-flex; align-items: center;">Import Backup</label>
+              <input id="dbImport" type="file" accept="application/json,.json" class="hidden">
+              <button class="ghost-btn" data-clear-lockouts>ล้าง Lockout</button>
+              <button class="danger-btn" data-clear-audit>ล้าง Audit Log</button>
+            </div>
+            <div class="security-card" style="margin-top: 12px;">
+              <h4>Storage Key</h4>
+              <div class="code-box">${escapeHTML(STORE_KEY)}</div>
+            </div>
+            <div class="audit-list">
+              ${auditRows.length === 0 ? `<div class="empty-state">ยังไม่มี audit log</div>` : auditRows.map((item) => {
+                const actor = item.actorId === "guest" ? "Guest" : (findUserById(item.actorId).displayName || item.actorId);
+                return `
+                  <div class="audit-item">
+                    <strong>${escapeHTML(item.action)} · ${escapeHTML(actor)}</strong>
+                    <span>${escapeHTML(displayDate(item.createdAt))}</span>
+                    <p>${escapeHTML(item.detail || "-")}</p>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      function switchToAuth(mode) {
+        authMode = mode;
+        view = "account";
+        closeModal();
+        render();
+      }
+
+      function toggleLike(storyId) {
+        const user = currentUser();
+        if (!user) {
+          showGate("การกดถูกใจ");
+          return;
+        }
+
+        const story = db.stories.find((item) => item.id === storyId);
+        if (!story) return;
+        story.likes = Array.isArray(story.likes) ? story.likes : [];
+        if (story.likes.includes(user.id)) {
+          story.likes = story.likes.filter((id) => id !== user.id);
+          showToast("เอาหัวใจออกแล้ว");
+        } else {
+          story.likes.push(user.id);
+          showToast("เก็บหัวใจให้เรื่องนี้แล้ว");
+        }
+        saveDB();
+        render();
+      }
+
+      app.addEventListener("click", (event) => {
+        const nav = event.target.closest("[data-nav]");
+        if (nav) {
+          const target = nav.dataset.nav;
+          if (target === "chat" && !currentUser()) {
+            showGate("การเข้าห้องแชต");
+            return;
+          }
+          if (target === "admin" && !isAdmin()) {
+            showToast("เฉพาะแอดมินเท่านั้น");
+            return;
+          }
+          view = target;
+          editingStoryId = "";
+          render();
+          return;
+        }
+
+        const auth = event.target.closest("[data-auth-mode]");
+        if (auth) {
+          authMode = auth.dataset.authMode;
+          render();
+          return;
+        }
+
+        const modalAuth = event.target.closest("[data-modal-auth]");
+        if (modalAuth) {
+          switchToAuth(modalAuth.dataset.modalAuth);
+          return;
+        }
+
+        const openStory = event.target.closest("[data-open-story]");
+        if (openStory) {
+          readerStoryId = openStory.dataset.openStory;
+          revealedCount = 1;
+          view = "reader";
+          render();
+          return;
+        }
+
+        const reveal = event.target.closest("[data-reveal-next]");
+        if (reveal) {
+          if (!currentUser()) {
+            showGate("การอ่านเรื่องเต็ม");
+            return;
+          }
+          revealedCount += 1;
+          render();
+          return;
+        }
+
+        const like = event.target.closest("[data-like-story]");
+        if (like) {
+          toggleLike(like.dataset.likeStory);
+          return;
+        }
+
+        const logout = event.target.closest("[data-logout]");
+        if (logout) {
+          const user = currentUser();
+          if (user) {
+            audit("LOGOUT", user.id, "ออกจากระบบ");
+            saveDB();
+          }
+          clearSession();
+          view = "home";
+          showToast("ออกจากระบบแล้ว");
+          render();
+          return;
+        }
+
+        const avatarChoice = event.target.closest("[data-avatar-index]");
+        if (avatarChoice) {
+          const avatar = avatarPresets[Number(avatarChoice.dataset.avatarIndex)];
+          if (!avatar) return;
+          uploadedAvatar = "";
+          pickedAvatar = avatar.src;
+          document.querySelectorAll(".avatar-choice").forEach((button) => button.classList.remove("active"));
+          avatarChoice.classList.add("active");
+          const preview = document.getElementById("avatarPreview");
+          if (preview) preview.src = pickedAvatar;
+          return;
+        }
+
+        const adminTabButton = event.target.closest("[data-admin-tab]");
+        if (adminTabButton) {
+          adminTab = adminTabButton.dataset.adminTab;
+          editingStoryId = "";
+          render();
+          return;
+        }
+
+        const editStory = event.target.closest("[data-edit-story]");
+        if (editStory) {
+          editingStoryId = editStory.dataset.editStory;
+          adminTab = "stories";
+          render();
+          return;
+        }
+
+        const cancelEdit = event.target.closest("[data-cancel-edit]");
+        if (cancelEdit) {
+          editingStoryId = "";
+          render();
+          return;
+        }
+
+        const exportDB = event.target.closest("[data-export-db]");
+        if (exportDB && isAdmin()) {
+          audit("EXPORT_BACKUP", currentUser().id, "แอดมิน export ฐานข้อมูล LocalStorage");
+          saveDB();
+          const blob = new Blob([JSON.stringify(db, null, 2)], { type: "application/json" });
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `khunlao-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(link.href);
+          showToast("Export backup แล้ว");
+          return;
+        }
+
+        const clearLockouts = event.target.closest("[data-clear-lockouts]");
+        if (clearLockouts && isAdmin()) {
+          db.security.loginAttempts = {};
+          audit("CLEAR_LOCKOUTS", currentUser().id, "ล้างข้อมูล login lockout");
+          saveDB();
+          showToast("ล้าง Lockout แล้ว");
+          render();
+          return;
+        }
+
+        const clearAudit = event.target.closest("[data-clear-audit]");
+        if (clearAudit && isAdmin() && confirm("ล้าง Audit Log ทั้งหมดหรือไม่?")) {
+          db.security.audit = [];
+          audit("CLEAR_AUDIT", currentUser().id, "เริ่ม audit log ใหม่");
+          saveDB();
+          showToast("ล้าง Audit Log แล้ว");
+          render();
+          return;
+        }
+
+        const deleteStory = event.target.closest("[data-delete-story]");
+        if (deleteStory && isAdmin()) {
+          const story = db.stories.find((item) => item.id === deleteStory.dataset.deleteStory);
+          if (story && confirm(`ลบเรื่อง "${story.title}" หรือไม่?`)) {
+            db.stories = db.stories.filter((item) => item.id !== story.id);
+            if (readerStoryId === story.id) readerStoryId = "";
+            audit("DELETE_STORY", currentUser().id, story.title);
+            saveDB();
+            showToast("ลบเรื่องแล้ว");
+            render();
+          }
+          return;
+        }
+
+        const deleteUser = event.target.closest("[data-delete-user]");
+        if (deleteUser && isAdmin()) {
+          const target = db.users.find((user) => user.id === deleteUser.dataset.deleteUser);
+          if (target && target.role !== "admin" && confirm(`ลบบัญชี ${target.displayName} หรือไม่?`)) {
+            db.users = db.users.filter((user) => user.id !== target.id);
+            db.chats = db.chats.filter((chat) => chat.userId !== target.id);
+            db.stories.forEach((story) => {
+              story.likes = (story.likes || []).filter((id) => id !== target.id);
+            });
+            audit("DELETE_USER", currentUser().id, target.username);
+            saveDB();
+            showToast("ลบบัญชีสมาชิกแล้ว");
+            render();
+          }
+          return;
+        }
+
+        const deleteChat = event.target.closest("[data-delete-chat]");
+        if (deleteChat && isAdmin()) {
+          db.chats = db.chats.filter((chat) => chat.id !== deleteChat.dataset.deleteChat);
+          audit("DELETE_CHAT", currentUser().id, deleteChat.dataset.deleteChat);
+          saveDB();
+          showToast("ลบข้อความแชตแล้ว");
+          render();
+        }
+      });
+
+      app.addEventListener("change", (event) => {
+        const importInput = event.target.closest("#dbImport");
+        if (importInput && importInput.files && importInput.files[0] && isAdmin()) {
+          const file = importInput.files[0];
+          const reader = new FileReader();
+          reader.onload = () => {
+            try {
+              const imported = JSON.parse(String(reader.result || "{}"));
+              if (!imported || !Array.isArray(imported.users) || !Array.isArray(imported.stories) || !Array.isArray(imported.chats)) {
+                throw new Error("รูปแบบ backup ไม่ถูกต้อง");
+              }
+              db = imported;
+              db = loadImportedDB(db);
+              audit("IMPORT_BACKUP", currentUser() ? currentUser().id : "guest", file.name);
+              saveDB();
+              showToast("Import backup สำเร็จ");
+              render();
+            } catch (error) {
+              showToast("Import ไม่สำเร็จ: ไฟล์ไม่ถูกต้อง");
+            } finally {
+              importInput.value = "";
+            }
+          };
+          reader.readAsText(file);
+          return;
+        }
+
+        const input = event.target.closest("#avatarUpload");
+        if (!input || !input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        if (file.type.indexOf("image/") !== 0) {
+          showToast("กรุณาเลือกรูปภาพเท่านั้น");
+          input.value = "";
+          return;
+        }
+        if (file.size > 900 * 1024) {
+          showToast("รูปใหญ่เกินไป แนะนำไม่เกิน 900KB เพื่อให้ LocalStorage รับไหว");
+          input.value = "";
+          return;
+        }
+
+        // Simulated upload: FileReader converts the chosen image into Base64 for LocalStorage.
+        const reader = new FileReader();
+        reader.onload = () => {
+          uploadedAvatar = String(reader.result || "");
+          pickedAvatar = uploadedAvatar;
+          const preview = document.getElementById("avatarPreview");
+          if (preview) preview.src = pickedAvatar;
+          document.querySelectorAll(".avatar-choice").forEach((button) => button.classList.remove("active"));
+          showToast("อัปโหลดรูปโปรไฟล์แล้ว");
+        };
+        reader.readAsDataURL(file);
+      });
+
+      app.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.target;
+
+        if (form.id === "loginForm") {
+          const data = new FormData(form);
+          const username = cleanText(data.get("username"), 40);
+          const password = String(data.get("password") || "");
+          const attempt = getLoginAttempt(username);
+          if (attempt.lockedUntil && attempt.lockedUntil > Date.now()) {
+            const waitMinutes = Math.ceil((attempt.lockedUntil - Date.now()) / 60000);
+            showToast(`บัญชีนี้ถูกพักชั่วคราว ลองใหม่ใน ${waitMinutes} นาที`);
+            return;
+          }
+          const user = db.users.find((item) => item.username.toLowerCase() === username.toLowerCase());
+          if (!user || !verifyPassword(user, password)) {
+            registerLoginFailure(username);
+            audit("LOGIN_FAILED", "guest", username);
+            saveDB();
+            const latest = getLoginAttempt(username);
+            if (latest.lockedUntil && latest.lockedUntil > Date.now()) {
+              showToast(`ล็อกอินผิดหลายครั้ง ระบบพัก ${Math.round(LOCKOUT_MS / 60000)} นาที`);
+            } else {
+              showToast(`Username หรือ Password ไม่ถูกต้อง เหลือ ${Math.max(0, LOCKOUT_LIMIT - latest.count)} ครั้งก่อนพักบัญชี`);
+            }
+            return;
+          }
+          clearLoginFailure(username);
+          user.lastLoginAt = new Date().toISOString();
+          setSession(user);
+          audit("LOGIN_SUCCESS", user.id, "เข้าสู่ระบบสำเร็จ");
+          saveDB();
+          view = "home";
+          showToast(`ยินดีต้อนรับ ${user.displayName}`);
+          render();
+          return;
+        }
+
+        if (form.id === "registerForm") {
+          const data = new FormData(form);
+          const username = cleanText(data.get("username"), 40);
+          const password = String(data.get("password") || "");
+          const displayName = cleanText(data.get("displayName"), 32);
+          const email = cleanText(data.get("email"), 120);
+          const birthDay = String(data.get("birthDay"));
+          const birthMonth = Number(data.get("birthMonth"));
+          const birthYear = String(data.get("birthYear"));
+          const strengthError = passwordStrengthMessage(password);
+
+          if (db.users.some((user) => user.username.toLowerCase() === username.toLowerCase())) {
+            showToast("Username นี้ถูกใช้แล้ว");
+            return;
+          }
+          if (strengthError) {
+            showToast(strengthError);
+            return;
+          }
+
+          const newUser = setPasswordFields({
+            id: uid("u"),
+            username,
+            role: "member",
+            firstName: cleanText(data.get("firstName"), 60),
+            lastName: cleanText(data.get("lastName"), 60),
+            displayName,
+            birthThai: `${birthDay} ${thaiMonths[birthMonth - 1]} ${birthYear}`,
+            gender: String(data.get("gender") || ""),
+            preferredGender: String(data.get("preferredGender") || ""),
+            email,
+            avatar: uploadedAvatar || pickedAvatar || avatarPresets[0].src,
+            privacy: {
+              showEmail: false,
+              showRealName: false,
+              showBirthDate: false
+            },
+            createdAt: new Date().toISOString()
+          }, password);
+
+          db.users.push(newUser);
+          audit("REGISTER", newUser.id, "สมัครสมาชิกใหม่");
+          saveDB();
+          setSession(newUser);
+          uploadedAvatar = "";
+          pickedAvatar = avatarPresets[0].src;
+          view = "home";
+          showToast("สมัครสมาชิกสำเร็จ");
+          render();
+          return;
+        }
+
+        if (form.id === "passwordForm") {
+          const user = currentUser();
+          if (!user) {
+            showGate("การเปลี่ยนรหัสผ่าน");
+            return;
+          }
+          const data = new FormData(form);
+          const currentPassword = String(data.get("currentPassword") || "");
+          const newPassword = String(data.get("newPassword") || "");
+          const strengthError = passwordStrengthMessage(newPassword);
+          if (!verifyPassword(user, currentPassword)) {
+            audit("PASSWORD_CHANGE_FAILED", user.id, "รหัสผ่านเดิมไม่ถูกต้อง");
+            saveDB();
+            showToast("รหัสผ่านเดิมไม่ถูกต้อง");
+            return;
+          }
+          if (strengthError) {
+            showToast(strengthError);
+            return;
+          }
+          setPasswordFields(user, newPassword);
+          audit("PASSWORD_CHANGED", user.id, "เปลี่ยนรหัสผ่านสำเร็จ");
+          saveDB();
+          form.reset();
+          showToast("เปลี่ยนรหัสผ่านแล้ว");
+          render();
+          return;
+        }
+
+        if (form.id === "chatForm") {
+          const user = currentUser();
+          if (!user) {
+            showGate("การส่งข้อความแชต");
+            return;
+          }
+          const input = form.elements.message;
+          const message = cleanText(input.value, 500);
+          if (!message) return;
+          db.chats.push({
+            id: uid("c"),
+            userId: user.id,
+            message,
+            createdAt: new Date().toISOString()
+          });
+          audit("CHAT_MESSAGE", user.id, "ส่งข้อความใน Global Chat");
+          saveDB();
+          input.value = "";
+          render();
+          const list = document.getElementById("chatList");
+          if (list) list.scrollTop = list.scrollHeight;
+          return;
+        }
+
+        if (form.id === "storyForm" && isAdmin()) {
+          const data = new FormData(form);
+          const storyId = String(data.get("storyId") || "");
+          const title = cleanText(data.get("title"), 140);
+          const author = cleanText(data.get("author"), 80);
+          const body = cleanMultiline(data.get("body"), 18000);
+          if (!title || !author || !body) {
+            showToast("กรอกข้อมูลเรื่องให้ครบก่อน");
+            return;
+          }
+
+          if (storyId) {
+            const story = db.stories.find((item) => item.id === storyId);
+            if (story) {
+              story.title = title;
+              story.author = author;
+              story.body = body;
+              story.updatedAt = new Date().toISOString();
+              audit("UPDATE_STORY", currentUser().id, title);
+              showToast("บันทึกเรื่องแล้ว");
+            }
+          } else {
+            db.stories.unshift({
+              id: uid("s"),
+              title,
+              author,
+              body,
+              likes: [],
+              createdAt: new Date().toISOString()
+            });
+            audit("CREATE_STORY", currentUser().id, title);
+            showToast("เพิ่มเรื่องใหม่แล้ว");
+          }
+
+          editingStoryId = "";
+          saveDB();
+          render();
+        }
+      });
+
+      modalRoot.addEventListener("click", (event) => {
+        if (event.target === modalRoot || event.target.closest("[data-modal-close]")) {
+          closeModal();
+          return;
+        }
+        const auth = event.target.closest("[data-modal-auth]");
+        if (auth) {
+          switchToAuth(auth.dataset.modalAuth);
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (loadingDone) document.body.classList.add("ready");
+      });
+
+      window.addEventListener("storage", (event) => {
+        if (event.key === STORE_KEY || event.key === SESSION_KEY) {
+          db = loadDB();
+          render();
+        }
+      });
+
+      db = loadDB();
+      window.setTimeout(() => {
+        loadingDone = true;
+        loadingScreen.classList.add("hidden");
+        document.body.classList.add("ready");
+        app.removeAttribute("aria-hidden");
+        render();
+      }, 2000);
+    })();
+  </script>
+</body>
+</html>
